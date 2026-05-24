@@ -1,10 +1,10 @@
 """Helper functions for research discovery."""
 import json
 import pandas as pd
-import arxiv
 from datetime import datetime, timedelta
 from src.agent.engine import ResearchAgent
 from src.config.settings import settings
+from src.rag_search import MultiSourceRAG
 
 
 def fetch_researchers(research_topic: str) -> pd.DataFrame:
@@ -70,73 +70,103 @@ CRITICAL RULES:
 
 
 def fetch_papers(research_topic: str, num_papers: int, years: int, researchers: list = None) -> pd.DataFrame:
-    """Fetch papers from ArXiv by researchers or topic.
+    """Fetch papers using GPT recommendations + RAG search across multiple sources.
 
     Args:
         research_topic: Research topic to search
         num_papers: Number of papers to retrieve
         years: Number of years to look back
-        researchers: Optional list of researcher names to search for their papers
+        researchers: Optional list of researcher names
 
     Returns:
-        DataFrame with columns: Title, Authors, Year, Publication Link, ArXiv Link
+        DataFrame with columns: Title, Authors, Year, Source, Link
     """
+    agent = ResearchAgent()
+    rag = MultiSourceRAG()
     papers_list = []
-    cutoff_date = datetime.now() - timedelta(days=years*365)
+
+    # Step 1: Ask GPT to recommend important papers/books in the field
+    prompt = f"""You are an expert in "{research_topic}".
+
+List the {num_papers} most important, influential, and seminal papers, books, or review articles in this field
+published or written in the last {years} years.
+
+For each resource, provide EXACTLY in this JSON format:
+{{
+    "resources": [
+        {{
+            "title": "Exact title",
+            "authors": ["Author One", "Author Two"],
+            "year": 2024,
+            "type": "paper"
+        }}
+    ]
+}}
+
+CRITICAL RULES:
+- Only include real resources you have reliable knowledge about
+- Include papers, books, AND review articles
+- Type should be: "paper", "book", or "review"
+- Sort by importance and influence in the field
+- Return ONLY valid JSON with no other text"""
 
     try:
-        # Search ArXiv with flexible topic query
-        # Using all fields to catch more relevant papers
-        query = f'all:{research_topic}'
+        response = agent.chat(prompt)
 
-        client = arxiv.Client()
-        search = client.results(
-            arxiv.Search(
-                query=query,
-                max_results=num_papers * 3,  # Fetch more to filter by date
-                sort_by=arxiv.SortCriterion.SubmittedDate,
-                sort_order=arxiv.SortOrder.Descending
-            )
-        )
+        # Parse JSON response
+        json_start = response.find('{')
+        json_end = response.rfind('}') + 1
+        json_str = response[json_start:json_end]
+        data = json.loads(json_str)
 
-        seen_ids = set()
-        for paper in search:
+        resources = data.get('resources', [])
+
+        # Step 2: For each resource, search across sources using RAG
+        for resource in resources:
             if len(papers_list) >= num_papers:
                 break
 
-            # Skip if already added (avoid duplicates)
-            if paper.entry_id in seen_ids:
-                continue
-            seen_ids.add(paper.entry_id)
+            title = resource.get('title')
+            authors = resource.get('authors', [])
+            year = resource.get('year')
+            res_type = resource.get('type', 'paper')
 
-            # Check if within date range
-            if paper.published.replace(tzinfo=None) < cutoff_date:
-                continue
+            # Search across multiple sources
+            result = rag.multi_search(title, authors, year)
 
-            # Skip papers with no authors
-            if not paper.authors:
-                continue
+            if result:
+                papers_list.append({
+                    'Title': title,
+                    'Authors': ', '.join(authors) if isinstance(authors, list) else authors,
+                    'Year': year,
+                    'Type': res_type.capitalize(),
+                    'Source': result.get('source', 'Unknown'),
+                    'Link': result.get('link', '')
+                })
+            else:
+                # Add anyway with note that resource wasn't found online
+                papers_list.append({
+                    'Title': title,
+                    'Authors': ', '.join(authors) if isinstance(authors, list) else authors,
+                    'Year': year,
+                    'Type': res_type.capitalize(),
+                    'Source': 'Not found online',
+                    'Link': ''
+                })
 
-            paper_dict = {
-                'title': paper.title.strip(),
-                'authors': ', '.join([author.name for author in paper.authors]),
-                'year': paper.published.year,
-                'publication_link': None,
-                'arxiv_link': paper.entry_id
-            }
-            papers_list.append(paper_dict)
-
+    except json.JSONDecodeError as e:
+        print(f"JSON parsing error: {e}")
+        return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Type', 'Source', 'Link'])
     except Exception as e:
-        print(f"Error searching ArXiv: {e}")
-        return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link'])
+        print(f"Error fetching papers: {e}")
+        return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Type', 'Source', 'Link'])
 
     # Convert to DataFrame
     if papers_list:
         df = pd.DataFrame(papers_list)
-        df.columns = ['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link']
         return df
     else:
-        return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link'])
+        return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Type', 'Source', 'Link'])
 
 
 def get_paper_summaries(selected_papers: list) -> dict:

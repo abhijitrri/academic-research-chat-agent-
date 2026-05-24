@@ -159,21 +159,15 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Title and description with SNB.jpg logo
-col1, col2 = st.columns([0.15, 0.85])
-
-with col1:
-    st.image('/Users/abhijitghosh/Pictures/SNB.jpg', width=60)
-
-with col2:
-    st.markdown("""
-        <div style="padding: 15px 20px; background: linear-gradient(135deg, rgba(147, 197, 114, 0.15) 0%, rgba(45, 80, 22, 0.1) 100%); border-radius: 15px;">
-            <h1 style="font-size: 2.2em; margin: 0; color: #2D5016;">📚 AI Research Collaborator</h1>
-            <p style="font-size: 0.95em; color: #4A7C2C; margin: 5px 0 0 0; font-style: italic;">
-                Discover papers • Find researchers • Explore directions
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+# Title and description
+st.markdown("""
+    <div style="padding: 20px; background: linear-gradient(135deg, rgba(147, 197, 114, 0.15) 0%, rgba(45, 80, 22, 0.1) 100%); border-radius: 15px; margin-bottom: 10px;">
+        <h1 style="font-size: 2.5em; margin: 0; color: #2D5016;">📚 AI Research Collaborator</h1>
+        <p style="font-size: 1em; color: #4A7C2C; margin: 5px 0 0 0; font-style: italic;">
+            Discover papers • Find researchers • Explore directions
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Sidebar for input parameters
 with st.sidebar:
@@ -231,6 +225,7 @@ if search_button:
         researcher_names = []
         if not researchers_df.empty:
             researcher_names = researchers_df['Name'].tolist()
+            st.info("⚠️ **Note:** Homepage links may be outdated. Please verify current affiliations and contact information directly.")
             st.dataframe(
                 researchers_df,
                 use_container_width=True,
@@ -241,23 +236,22 @@ if search_button:
         else:
             st.warning("No researchers found.")
 
-        # Step 2: Fetch papers using researcher names
-        st.markdown("### 📖 Top Research Papers")
-        with st.spinner("Searching ArXiv for papers by top researchers..."):
+        # Step 2: Fetch papers using GPT recommendations + RAG search
+        st.markdown("### 📖 Top Research Papers, Books & Reviews")
+        with st.spinner("Searching GPT knowledge + ArXiv, Books, Journals..."):
             papers_df = fetch_papers(research_topic, num_papers, years_to_explore, researchers=researcher_names)
 
         if not papers_df.empty:
-            # Remove Publication Link column if it exists
-            display_df = papers_df.drop(columns=['Publication Link'], errors='ignore')
             st.dataframe(
-                display_df,
+                papers_df,
                 use_container_width=True,
                 column_config={
-                    "ArXiv Link": st.column_config.LinkColumn(),
+                    "Link": st.column_config.LinkColumn(display_text="🔗 Open"),
                 }
             )
+            st.caption("📌 **Sources:** Papers from ArXiv, Books from Google Books, Journals via CrossRef")
         else:
-            st.warning("No papers found on ArXiv. Try a different topic or adjust the year range.")
+            st.warning("No resources found. Try a different topic.")
 
         # Fetch research directions
         st.markdown("### 🔮 Future Research Directions")
