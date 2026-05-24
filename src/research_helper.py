@@ -7,16 +7,17 @@ from src.config.settings import settings
 from src.rag_search import MultiSourceRAG
 
 
-def fetch_researchers(research_topic: str) -> pd.DataFrame:
+def fetch_researchers(research_topic: str, model: str = None) -> pd.DataFrame:
     """Fetch top researchers in a research area using GPT.
 
     Args:
         research_topic: Research topic to search
+        model: Optional LLM model to use
 
     Returns:
         DataFrame with columns: Name, Affiliation, Homepage
     """
-    agent = ResearchAgent()
+    agent = ResearchAgent(model=model)
 
     prompt = f"""Based on your knowledge, list the 10 most authoritative, influential, and active contemporary researchers
 in the field of "{research_topic}" who have published papers or articles in this field in the last 2 years.
@@ -69,7 +70,7 @@ CRITICAL RULES:
         return pd.DataFrame(columns=['Name', 'Affiliation', 'Homepage'])
 
 
-def fetch_papers(research_topic: str, num_papers: int, years: int, researchers: list = None) -> pd.DataFrame:
+def fetch_papers(research_topic: str, num_papers: int, years: int, researchers: list = None, model: str = None) -> pd.DataFrame:
     """Fetch papers using GPT recommendations + RAG search across multiple sources.
 
     Args:
@@ -77,11 +78,12 @@ def fetch_papers(research_topic: str, num_papers: int, years: int, researchers: 
         num_papers: Number of papers to retrieve
         years: Number of years to look back
         researchers: Optional list of researcher names
+        model: Optional LLM model to use
 
     Returns:
         DataFrame with columns: Title, Authors, Year, Source, Link
     """
-    agent = ResearchAgent()
+    agent = ResearchAgent(model=model)
     rag = MultiSourceRAG()
     papers_list = []
 
@@ -207,16 +209,17 @@ Return ONLY valid JSON."""
         return {}
 
 
-def get_research_directions(research_topic: str) -> list:
+def get_research_directions(research_topic: str, model: str = None) -> list:
     """Get future research directions in a field using GPT.
 
     Args:
         research_topic: Research topic
+        model: Optional LLM model to use
 
     Returns:
         List of research directions (max 200 words each)
     """
-    agent = ResearchAgent()
+    agent = ResearchAgent(model=model)
 
     prompt = f"""Based on current trends, open challenges, and emerging opportunities in "{research_topic}",
 propose 5 promising and innovative future research directions that are:

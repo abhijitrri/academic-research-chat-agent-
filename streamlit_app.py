@@ -173,6 +173,14 @@ with st.sidebar:
         </div>
         """, unsafe_allow_html=True)
 
+    # Model selection
+    selected_model = st.selectbox(
+        label="OpenAI Model",
+        options=["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"],
+        index=0,
+        help="Choose the OpenAI model to use for research analysis"
+    )
+
     # Research topic input
     research_topic = st.text_input(
         label="Research Topic",
@@ -218,9 +226,9 @@ if search_button:
 
         with ThreadPoolExecutor(max_workers=3) as executor:
             # Submit all tasks simultaneously
-            researcher_future = executor.submit(fetch_researchers, research_topic)
-            papers_future = executor.submit(fetch_papers, research_topic, num_papers, years_to_explore, None)
-            directions_future = executor.submit(get_research_directions, research_topic)
+            researcher_future = executor.submit(fetch_researchers, research_topic, selected_model)
+            papers_future = executor.submit(fetch_papers, research_topic, num_papers, years_to_explore, None, selected_model)
+            directions_future = executor.submit(get_research_directions, research_topic, selected_model)
 
             # Collect results as they complete
             results = {
