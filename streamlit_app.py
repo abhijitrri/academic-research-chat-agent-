@@ -16,14 +16,17 @@ st.set_page_config(
 st.markdown("""
     <style>
         /* Pistachio green background with transparent SNB.jpg overlay */
-        .stApp {
-            background-color: #93C572;
-            background-image: url('file:///Users/abhijitghosh/projects/academic-research-chat-agent-/SNB.jpg');
+        body {
+            background-color: #93C572 !important;
+            background-image: linear-gradient(rgba(147, 197, 114, 0.75), rgba(147, 197, 114, 0.75));
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            background-blend-mode: overlay;
-            background-color: rgba(147, 197, 114, 0.85);
+        }
+
+        .stApp {
+            background: linear-gradient(135deg, #93C572 0%, #7AB54A 100%);
+            background-attachment: fixed;
         }
 
         /* Main content area */
@@ -268,46 +271,13 @@ if search_button:
         st.markdown("*(Chat interface coming soon)*")
 else:
     st.markdown("""
-        <div style="background: linear-gradient(135deg, rgba(147, 197, 114, 0.1) 0%, rgba(74, 124, 44, 0.05) 100%); border-radius: 15px; padding: 30px; border-left: 5px solid #93C572;">
-            <h2 style="color: #2D5016; margin-top: 0;">👋 Welcome to the AI Research Collaborator Agent</h2>
-
-            <p style="color: #4A7C2C; font-size: 1.1em;">
-                This platform helps you discover research papers, identify key researchers,
-                and explore new research directions in your field of interest.
+        <div style="text-align: center; padding: 60px 20px;">
+            <p style="color: #4A7C2C; font-size: 1.3em; margin: 20px 0;">
+                👈 Enter a research topic in the sidebar and click <strong>Search</strong>
             </p>
-
-            <div style="background: white; border-radius: 10px; padding: 20px; margin: 20px 0;">
-                <h3 style="color: #2D5016; border: none; padding: 0; margin-top: 0;">🚀 How to use:</h3>
-                <ol style="color: #4A7C2C; line-height: 1.8;">
-                    <li>Enter your research topic in the sidebar</li>
-                    <li>Select how many papers you want to explore (1-10)</li>
-                    <li>Choose the time period (last 1-50 years)</li>
-                    <li>Click <strong>Search</strong> to begin your research journey</li>
-                </ol>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div style="background: white; border-radius: 10px; padding: 15px; text-align: center;">
-                    <p style="font-size: 1.5em; margin: 0;">📰</p>
-                    <p style="color: #2D5016; font-weight: bold; margin: 5px 0;">Real Papers</p>
-                    <p style="color: #4A7C2C; font-size: 0.9em; margin: 0;">Direct ArXiv links</p>
-                </div>
-                <div style="background: white; border-radius: 10px; padding: 15px; text-align: center;">
-                    <p style="font-size: 1.5em; margin: 0;">👨‍🔬</p>
-                    <p style="color: #2D5016; font-weight: bold; margin: 5px 0;">Top Researchers</p>
-                    <p style="color: #4A7C2C; font-size: 0.9em; margin: 0;">Leading experts</p>
-                </div>
-                <div style="background: white; border-radius: 10px; padding: 15px; text-align: center;">
-                    <p style="font-size: 1.5em; margin: 0;">🔮</p>
-                    <p style="color: #2D5016; font-weight: bold; margin: 5px 0;">Future Directions</p>
-                    <p style="color: #4A7C2C; font-size: 0.9em; margin: 0;">New research paths</p>
-                </div>
-                <div style="background: white; border-radius: 10px; padding: 15px; text-align: center;">
-                    <p style="font-size: 1.5em; margin: 0;">💬</p>
-                    <p style="color: #2D5016; font-weight: bold; margin: 5px 0;">AI Chat</p>
-                    <p style="color: #4A7C2C; font-size: 0.9em; margin: 0;">Summarize papers</p>
-                </div>
-            </div>
+            <p style="color: #7AB54A; font-size: 0.95em;">
+                Discover papers • Find researchers • Explore directions
+            </p>
         </div>
     """, unsafe_allow_html=True)
 
