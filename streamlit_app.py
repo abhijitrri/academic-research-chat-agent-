@@ -159,15 +159,21 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Title and description with beautiful styling
-st.markdown("""
-    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(147, 197, 114, 0.15) 0%, rgba(45, 80, 22, 0.1) 100%); border-radius: 15px; margin-bottom: 30px;">
-        <h1 style="font-size: 3em; margin: 0; color: #2D5016;">📚 AI Research Collaborator Agent</h1>
-        <p style="font-size: 1.2em; color: #4A7C2C; margin: 10px 0 0 0; font-style: italic;">
-            Discover groundbreaking research papers, identify leading researchers, and explore future directions
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+# Title and description with SNB.jpg logo
+col1, col2 = st.columns([1, 4])
+
+with col1:
+    st.image('/Users/abhijitghosh/Pictures/SNB.jpg', width=80, use_column_width=False)
+
+with col2:
+    st.markdown("""
+        <div style="padding: 20px; background: linear-gradient(135deg, rgba(147, 197, 114, 0.15) 0%, rgba(45, 80, 22, 0.1) 100%); border-radius: 15px;">
+            <h1 style="font-size: 2.5em; margin: 0; color: #2D5016;">📚 AI Research Collaborator</h1>
+            <p style="font-size: 1em; color: #4A7C2C; margin: 5px 0 0 0; font-style: italic;">
+                Discover papers • Find researchers • Explore directions
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 # Sidebar for input parameters
 with st.sidebar:
@@ -241,11 +247,12 @@ if search_button:
             papers_df = fetch_papers(research_topic, num_papers, years_to_explore, researchers=researcher_names)
 
         if not papers_df.empty:
+            # Remove Publication Link column if it exists
+            display_df = papers_df.drop(columns=['Publication Link'], errors='ignore')
             st.dataframe(
-                papers_df,
+                display_df,
                 use_container_width=True,
                 column_config={
-                    "Publication Link": st.column_config.LinkColumn(),
                     "ArXiv Link": st.column_config.LinkColumn(),
                 }
             )

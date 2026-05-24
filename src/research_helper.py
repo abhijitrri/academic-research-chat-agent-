@@ -84,67 +84,51 @@ def fetch_papers(research_topic: str, num_papers: int, years: int, researchers: 
     papers_list = []
     cutoff_date = datetime.now() - timedelta(days=years*365)
 
-    # If researchers provided, search for their papers first
-    if researchers:
-        for researcher_name in researchers[:5]:  # Search top 5 researchers
-            try:
-                # Search ArXiv for papers by this researcher in the topic
-                query = f'au:"{researcher_name}" AND ({research_topic})'
-                search = arxiv.Client().results(
-                    arxiv.Search(query=query, max_results=num_papers, sort_by=arxiv.SortCriterion.SubmittedDate)
-                )
+    try:
+        # Search ArXiv with flexible topic query
+        # Using all fields to catch more relevant papers
+        query = f'all:{research_topic}'
 
-                for paper in search:
-                    if len(papers_list) >= num_papers:
-                        break
+        client = arxiv.Client()
+        search = client.results(
+            arxiv.Search(
+                query=query,
+                max_results=num_papers * 3,  # Fetch more to filter by date
+                sort_by=arxiv.SortCriterion.SubmittedDate,
+                sort_order=arxiv.SortOrder.Descending
+            )
+        )
 
-                    # Check if within date range
-                    if paper.published.replace(tzinfo=None) < cutoff_date:
-                        continue
+        seen_ids = set()
+        for paper in search:
+            if len(papers_list) >= num_papers:
+                break
 
-                    paper_dict = {
-                        'title': paper.title,
-                        'authors': ', '.join([author.name for author in paper.authors]),
-                        'year': paper.published.year,
-                        'publication_link': None,  # ArXiv papers don't have traditional DOI initially
-                        'arxiv_link': paper.entry_id
-                    }
-                    papers_list.append(paper_dict)
+            # Skip if already added (avoid duplicates)
+            if paper.entry_id in seen_ids:
+                continue
+            seen_ids.add(paper.entry_id)
 
-            except Exception as e:
-                print(f"Error searching for {researcher_name}: {e}")
+            # Check if within date range
+            if paper.published.replace(tzinfo=None) < cutoff_date:
                 continue
 
-    # If not enough papers found by researcher search, do general topic search
-    if len(papers_list) < num_papers:
-        try:
-            query = research_topic
-            search = arxiv.Client().results(
-                arxiv.Search(query=query, max_results=num_papers * 2, sort_by=arxiv.SortCriterion.Relevance)
-            )
+            # Skip papers with no authors
+            if not paper.authors:
+                continue
 
-            for paper in search:
-                if len(papers_list) >= num_papers:
-                    break
+            paper_dict = {
+                'title': paper.title.strip(),
+                'authors': ', '.join([author.name for author in paper.authors]),
+                'year': paper.published.year,
+                'publication_link': None,
+                'arxiv_link': paper.entry_id
+            }
+            papers_list.append(paper_dict)
 
-                # Check if within date range
-                if paper.published.replace(tzinfo=None) < cutoff_date:
-                    continue
-
-                # Avoid duplicates
-                if not any(p['arxiv_link'] == paper.entry_id for p in papers_list):
-                    paper_dict = {
-                        'title': paper.title,
-                        'authors': ', '.join([author.name for author in paper.authors]),
-                        'year': paper.published.year,
-                        'publication_link': None,
-                        'arxiv_link': paper.entry_id
-                    }
-                    papers_list.append(paper_dict)
-
-        except Exception as e:
-            print(f"Error searching ArXiv: {e}")
-            return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link'])
+    except Exception as e:
+        print(f"Error searching ArXiv: {e}")
+        return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link'])
 
     # Convert to DataFrame
     if papers_list:
