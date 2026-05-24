@@ -1,80 +1,10 @@
 """Helper functions for research discovery."""
 import json
 import pandas as pd
+import arxiv
+from datetime import datetime, timedelta
 from src.agent.engine import ResearchAgent
 from src.config.settings import settings
-
-
-def fetch_papers(research_topic: str, num_papers: int, years: int) -> pd.DataFrame:
-    """Fetch top papers in a research area using GPT.
-
-    Args:
-        research_topic: Research topic to search
-        num_papers: Number of papers to retrieve
-        years: Number of years to look back
-
-    Returns:
-        DataFrame with columns: Title, Authors, Year, Publication Link, ArXiv Link
-    """
-    agent = ResearchAgent()
-
-    prompt = f"""Based on your knowledge, recommend the {num_papers} most important, influential, and impactful papers/review articles/books
-in the field of "{research_topic}" published in the last {years} years.
-
-These should be papers you actually know about from your training data. Include papers from:
-- Top-tier journals (Nature, Science, PNAS, Cell, Lancet, etc.)
-- High-quality conference proceedings (NeurIPS, ICML, ICCV, ECCV, MICCAI, etc.)
-- ArXiv preprints that gained significant attention
-- Important review articles and books in the field
-
-For each paper, provide EXACTLY in this JSON format:
-{{
-    "papers": [
-        {{
-            "title": "Exact paper title you know about",
-            "authors": ["Author One", "Author Two", "Author Three"],
-            "year": 2024,
-            "publication_link": "https://doi.org/10.xxxx/xxxxx or https://actual-journal-url.com/paper",
-            "arxiv_link": "https://arxiv.org/abs/XXXX.XXXXX or null if not applicable"
-        }}
-    ]
-}}
-
-CRITICAL RULES:
-- Only include papers/articles/books you have reliable knowledge about
-- Sort authors alphabetically by last name
-- Use realistic DOI links or journal URLs if you know them, otherwise use null
-- Use real arxiv links if the paper is on arxiv, otherwise null
-- Year must be between {2024 - years} and 2024
-- Return ONLY valid JSON with no other text
-- Papers should be seminal works, highly cited papers, or important recent breakthroughs
-- Include diverse perspectives and methodologies in the field"""
-
-    response = agent.chat(prompt)
-
-    try:
-        # Parse JSON response
-        json_start = response.find('{')
-        json_end = response.rfind('}') + 1
-        json_str = response[json_start:json_end]
-        data = json.loads(json_str)
-
-        # Convert to DataFrame
-        papers_list = data.get('papers', [])
-        df = pd.DataFrame(papers_list)
-
-        # Format authors column
-        if 'authors' in df.columns:
-            df['authors'] = df['authors'].apply(lambda x: ', '.join(x) if isinstance(x, list) else str(x))
-
-        # Rename columns for display
-        df.columns = ['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link']
-
-        return df
-
-    except json.JSONDecodeError:
-        # If JSON parsing fails, return empty DataFrame
-        return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link'])
 
 
 def fetch_researchers(research_topic: str) -> pd.DataFrame:
@@ -137,6 +67,92 @@ CRITICAL RULES:
 
     except json.JSONDecodeError:
         return pd.DataFrame(columns=['Name', 'Affiliation', 'Homepage'])
+
+
+def fetch_papers(research_topic: str, num_papers: int, years: int, researchers: list = None) -> pd.DataFrame:
+    """Fetch papers from ArXiv by researchers or topic.
+
+    Args:
+        research_topic: Research topic to search
+        num_papers: Number of papers to retrieve
+        years: Number of years to look back
+        researchers: Optional list of researcher names to search for their papers
+
+    Returns:
+        DataFrame with columns: Title, Authors, Year, Publication Link, ArXiv Link
+    """
+    papers_list = []
+    cutoff_date = datetime.now() - timedelta(days=years*365)
+
+    # If researchers provided, search for their papers first
+    if researchers:
+        for researcher_name in researchers[:5]:  # Search top 5 researchers
+            try:
+                # Search ArXiv for papers by this researcher in the topic
+                query = f'au:"{researcher_name}" AND ({research_topic})'
+                search = arxiv.Client().results(
+                    arxiv.Search(query=query, max_results=num_papers, sort_by=arxiv.SortCriterion.SubmittedDate)
+                )
+
+                for paper in search:
+                    if len(papers_list) >= num_papers:
+                        break
+
+                    # Check if within date range
+                    if paper.published.replace(tzinfo=None) < cutoff_date:
+                        continue
+
+                    paper_dict = {
+                        'title': paper.title,
+                        'authors': ', '.join([author.name for author in paper.authors]),
+                        'year': paper.published.year,
+                        'publication_link': None,  # ArXiv papers don't have traditional DOI initially
+                        'arxiv_link': paper.entry_id
+                    }
+                    papers_list.append(paper_dict)
+
+            except Exception as e:
+                print(f"Error searching for {researcher_name}: {e}")
+                continue
+
+    # If not enough papers found by researcher search, do general topic search
+    if len(papers_list) < num_papers:
+        try:
+            query = research_topic
+            search = arxiv.Client().results(
+                arxiv.Search(query=query, max_results=num_papers * 2, sort_by=arxiv.SortCriterion.Relevance)
+            )
+
+            for paper in search:
+                if len(papers_list) >= num_papers:
+                    break
+
+                # Check if within date range
+                if paper.published.replace(tzinfo=None) < cutoff_date:
+                    continue
+
+                # Avoid duplicates
+                if not any(p['arxiv_link'] == paper.entry_id for p in papers_list):
+                    paper_dict = {
+                        'title': paper.title,
+                        'authors': ', '.join([author.name for author in paper.authors]),
+                        'year': paper.published.year,
+                        'publication_link': None,
+                        'arxiv_link': paper.entry_id
+                    }
+                    papers_list.append(paper_dict)
+
+        except Exception as e:
+            print(f"Error searching ArXiv: {e}")
+            return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link'])
+
+    # Convert to DataFrame
+    if papers_list:
+        df = pd.DataFrame(papers_list)
+        df.columns = ['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link']
+        return df
+    else:
+        return pd.DataFrame(columns=['Title', 'Authors', 'Year', 'Publication Link', 'ArXiv Link'])
 
 
 def get_paper_summaries(selected_papers: list) -> dict:

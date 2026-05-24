@@ -28,6 +28,8 @@ dependencies = [
     "redis>=5.0.0",
     "python-dotenv>=1.0.0",
     "pydantic-settings>=2.0.0",
+    "arxiv>=1.4.7",
+    "requests>=2.31.0",
 ]
 
 [project.optional-dependencies]

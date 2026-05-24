@@ -74,10 +74,28 @@ if search_button:
         st.success(f"Searching for papers in: **{research_topic}**")
         st.info(f"Parameters: {num_papers} papers from last {years_to_explore} years")
 
-        # Fetch and display papers
+        # Step 1: Fetch researchers first
+        st.markdown("### 👥 Top Researchers")
+        with st.spinner("Identifying top researchers in this field..."):
+            researchers_df = fetch_researchers(research_topic)
+
+        researcher_names = []
+        if not researchers_df.empty:
+            researcher_names = researchers_df['Name'].tolist()
+            st.dataframe(
+                researchers_df,
+                use_container_width=True,
+                column_config={
+                    "Homepage": st.column_config.LinkColumn(),
+                }
+            )
+        else:
+            st.warning("No researchers found.")
+
+        # Step 2: Fetch papers using researcher names
         st.markdown("### 📖 Top Research Papers")
-        with st.spinner("Fetching papers..."):
-            papers_df = fetch_papers(research_topic, num_papers, years_to_explore)
+        with st.spinner("Searching ArXiv for papers by top researchers..."):
+            papers_df = fetch_papers(research_topic, num_papers, years_to_explore, researchers=researcher_names)
 
         if not papers_df.empty:
             st.dataframe(
@@ -89,23 +107,7 @@ if search_button:
                 }
             )
         else:
-            st.warning("No papers found. Please try a different search query.")
-
-        # Fetch and display researchers
-        st.markdown("### 👥 Top Researchers")
-        with st.spinner("Fetching researchers..."):
-            researchers_df = fetch_researchers(research_topic)
-
-        if not researchers_df.empty:
-            st.dataframe(
-                researchers_df,
-                use_container_width=True,
-                column_config={
-                    "Homepage": st.column_config.LinkColumn(),
-                }
-            )
-        else:
-            st.warning("No researchers found.")
+            st.warning("No papers found on ArXiv. Try a different topic or adjust the year range.")
 
         # Fetch research directions
         st.markdown("### 🔮 Future Research Directions")
