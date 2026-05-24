@@ -16,15 +16,10 @@ st.set_page_config(
 # Custom CSS for beautiful styling
 st.markdown("""
     <style>
-        /* Pistachio green background with SNB.jpg transparent overlay */
+        /* Lighter pistachio green background */
         body, .stApp {
-            background-image:
-                linear-gradient(135deg, rgba(147, 197, 114, 0.75) 0%, rgba(122, 181, 74, 0.75) 100%),
-                url('file:///Users/abhijitghosh/Pictures/SNB.jpg');
-            background-size: cover;
-            background-position: center;
+            background: linear-gradient(135deg, #B5E689 0%, #A8D988 100%);
             background-attachment: fixed;
-            background-color: #93C572;
         }
 
         /* Main content area */
