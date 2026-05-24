@@ -15,18 +15,15 @@ st.set_page_config(
 # Custom CSS for beautiful styling
 st.markdown("""
     <style>
-        /* Pistachio green background with transparent SNB.jpg overlay */
-        body {
-            background-color: #93C572 !important;
-            background-image: linear-gradient(rgba(147, 197, 114, 0.75), rgba(147, 197, 114, 0.75));
+        /* Pistachio green background with SNB.jpg transparent overlay */
+        body, .stApp {
+            background-image:
+                linear-gradient(135deg, rgba(147, 197, 114, 0.75) 0%, rgba(122, 181, 74, 0.75) 100%),
+                url('file:///Users/abhijitghosh/Pictures/SNB.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-        }
-
-        .stApp {
-            background: linear-gradient(135deg, #93C572 0%, #7AB54A 100%);
-            background-attachment: fixed;
+            background-color: #93C572;
         }
 
         /* Main content area */
