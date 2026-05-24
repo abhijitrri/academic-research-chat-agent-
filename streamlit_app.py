@@ -16,9 +16,9 @@ st.set_page_config(
 # Custom CSS for beautiful styling
 st.markdown("""
     <style>
-        /* Lighter pistachio green background */
+        /* Very light pistachio green background */
         body, .stApp {
-            background: linear-gradient(135deg, #B5E689 0%, #A8D988 100%);
+            background: linear-gradient(135deg, #E0F9DB 0%, #D4F5C9 100%);
             background-attachment: fixed;
         }
 
