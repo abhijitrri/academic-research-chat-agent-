@@ -1,6 +1,7 @@
 """Main Streamlit dashboard for AI Research Collaborator Agent."""
 import streamlit as st
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.config.settings import settings
 from src.research_helper import fetch_papers, fetch_researchers, get_research_directions
 
@@ -217,13 +218,43 @@ if search_button:
         st.success(f"Searching for papers in: **{research_topic}**")
         st.info(f"Parameters: {num_papers} papers from last {years_to_explore} years")
 
-        # Step 1: Fetch researchers first
-        st.markdown("### 👥 Top Researchers")
-        with st.spinner("Identifying top researchers in this field..."):
-            researchers_df = fetch_researchers(research_topic)
+        # Parallel fetch: researchers, papers, and directions simultaneously
+        st.markdown("### 🔄 Searching across all sources in parallel...")
 
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit all tasks simultaneously
+            researcher_future = executor.submit(fetch_researchers, research_topic)
+            papers_future = executor.submit(fetch_papers, research_topic, num_papers, years_to_explore, None)
+            directions_future = executor.submit(get_research_directions, research_topic)
+
+            # Collect results as they complete
+            results = {
+                researcher_future: 'researchers',
+                papers_future: 'papers',
+                directions_future: 'directions'
+            }
+
+            researchers_df = None
+            papers_df = None
+            directions = None
+
+            for future in as_completed(results):
+                task_name = results[future]
+                try:
+                    result = future.result(timeout=60)
+                    if task_name == 'researchers':
+                        researchers_df = result
+                    elif task_name == 'papers':
+                        papers_df = result
+                    elif task_name == 'directions':
+                        directions = result
+                except Exception as e:
+                    st.error(f"Error fetching {task_name}: {e}")
+
+        # Display results
+        st.markdown("### 👥 Top Researchers")
         researcher_names = []
-        if not researchers_df.empty:
+        if researchers_df is not None and not researchers_df.empty:
             researcher_names = researchers_df['Name'].tolist()
             st.info("⚠️ **Note:** Homepage links may be outdated. Please verify current affiliations and contact information directly.")
             st.dataframe(
@@ -236,12 +267,8 @@ if search_button:
         else:
             st.warning("No researchers found.")
 
-        # Step 2: Fetch papers using GPT recommendations + RAG search
         st.markdown("### 📖 Top Research Papers, Books & Reviews")
-        with st.spinner("Searching GPT knowledge + ArXiv, Books, Journals..."):
-            papers_df = fetch_papers(research_topic, num_papers, years_to_explore, researchers=researcher_names)
-
-        if not papers_df.empty:
+        if papers_df is not None and not papers_df.empty:
             st.dataframe(
                 papers_df,
                 use_container_width=True,
@@ -253,11 +280,7 @@ if search_button:
         else:
             st.warning("No resources found. Try a different topic.")
 
-        # Fetch research directions
         st.markdown("### 🔮 Future Research Directions")
-        with st.spinner("Generating research directions..."):
-            directions = get_research_directions(research_topic)
-
         if directions:
             for i, direction in enumerate(directions, 1):
                 st.markdown(f"**{i}. {direction.get('title', 'Untitled')}**")

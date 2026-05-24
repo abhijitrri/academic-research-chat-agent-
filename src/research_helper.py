@@ -121,38 +121,38 @@ CRITICAL RULES:
 
         resources = data.get('resources', [])
 
-        # Step 2: For each resource, search across sources using RAG
-        for resource in resources:
-            if len(papers_list) >= num_papers:
-                break
+        # Step 2: Batch search across sources in parallel for all resources
+        if resources:
+            search_results = rag.batch_search(resources[:num_papers])
 
-            title = resource.get('title')
-            authors = resource.get('authors', [])
-            year = resource.get('year')
-            res_type = resource.get('type', 'paper')
+            for i, resource in enumerate(resources[:num_papers]):
+                title = resource.get('title')
+                authors = resource.get('authors', [])
+                year = resource.get('year')
+                res_type = resource.get('type', 'paper')
 
-            # Search across multiple sources
-            result = rag.multi_search(title, authors, year)
+                # Get result from parallel search
+                result = search_results[i] if i < len(search_results) else None
 
-            if result:
-                papers_list.append({
-                    'Title': title,
-                    'Authors': ', '.join(authors) if isinstance(authors, list) else authors,
-                    'Year': year,
-                    'Type': res_type.capitalize(),
-                    'Source': result.get('source', 'Unknown'),
-                    'Link': result.get('link', '')
-                })
-            else:
-                # Add anyway with note that resource wasn't found online
-                papers_list.append({
-                    'Title': title,
-                    'Authors': ', '.join(authors) if isinstance(authors, list) else authors,
-                    'Year': year,
-                    'Type': res_type.capitalize(),
-                    'Source': 'Not found online',
-                    'Link': ''
-                })
+                if result:
+                    papers_list.append({
+                        'Title': title,
+                        'Authors': ', '.join(authors) if isinstance(authors, list) else authors,
+                        'Year': year,
+                        'Type': res_type.capitalize(),
+                        'Source': result.get('source', 'Unknown'),
+                        'Link': result.get('link', '')
+                    })
+                else:
+                    # Add anyway with note that resource wasn't found online
+                    papers_list.append({
+                        'Title': title,
+                        'Authors': ', '.join(authors) if isinstance(authors, list) else authors,
+                        'Year': year,
+                        'Type': res_type.capitalize(),
+                        'Source': 'Not found online',
+                        'Link': ''
+                    })
 
     except json.JSONDecodeError as e:
         print(f"JSON parsing error: {e}")

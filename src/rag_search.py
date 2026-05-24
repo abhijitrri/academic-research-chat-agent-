@@ -2,6 +2,8 @@
 import arxiv
 import requests
 import json
+import asyncio
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import pandas as pd
@@ -152,7 +154,7 @@ class MultiSourceRAG:
 
     def multi_search(self, title: str, authors: List[str], year: int,
                      search_type: str = 'auto') -> Optional[Dict]:
-        """Search across all sources for a paper/book.
+        """Search across all sources in parallel for a paper/book.
 
         Args:
             title: Title to search
@@ -163,25 +165,59 @@ class MultiSourceRAG:
         Returns:
             Dict with best match or None
         """
+        # Use ThreadPoolExecutor for parallel searches
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(self.search_arxiv, title, authors, year): 'arxiv',
+                executor.submit(self.search_google_books, title, authors): 'books',
+                executor.submit(self.search_major_journals, title, authors, year): 'journals'
+            }
+
+            results = []
+            # Collect results as they complete (no waiting for slowest)
+            for future in as_completed(futures):
+                try:
+                    result = future.result(timeout=5)
+                    if result and result.get('found'):
+                        # Return immediately on first found result
+                        return result
+                    elif result:
+                        results.append(result)
+                except Exception as e:
+                    print(f"Search error: {e}")
+
+        # Return best attempt if nothing marked as found
+        return results[0] if results else None
+
+    def batch_search(self, resources: List[Dict]) -> List[Optional[Dict]]:
+        """Search for multiple resources in parallel.
+
+        Args:
+            resources: List of dicts with 'title', 'authors', 'year'
+
+        Returns:
+            List of search results
+        """
         results = []
 
-        # Search all sources
-        arxiv_result = self.search_arxiv(title, authors, year)
-        if arxiv_result:
-            results.append(arxiv_result)
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {
+                executor.submit(
+                    self.multi_search,
+                    r.get('title'),
+                    r.get('authors', []),
+                    r.get('year')
+                ): i
+                for i, r in enumerate(resources)
+            }
 
-        book_result = self.search_google_books(title, authors)
-        if book_result:
-            results.append(book_result)
+            # Maintain order while processing in parallel
+            ordered_results = [None] * len(resources)
+            for future in as_completed(futures):
+                try:
+                    idx = futures[future]
+                    ordered_results[idx] = future.result(timeout=10)
+                except Exception as e:
+                    print(f"Batch search error: {e}")
 
-        journal_result = self.search_major_journals(title, authors, year)
-        if journal_result:
-            results.append(journal_result)
-
-        # Return first found result (prioritize in order: ArXiv > Journal > Books)
-        for result in results:
-            if result['found']:
-                return result
-
-        # Return best attempt even if not officially "found"
-        return results[0] if results else None
+            return ordered_results
