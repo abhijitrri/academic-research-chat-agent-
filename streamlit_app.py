@@ -160,16 +160,16 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Title and description with SNB.jpg logo
-col1, col2 = st.columns([1, 4])
+col1, col2 = st.columns([0.15, 0.85])
 
 with col1:
-    st.image('/Users/abhijitghosh/Pictures/SNB.jpg', width=80, use_column_width=False)
+    st.image('/Users/abhijitghosh/Pictures/SNB.jpg', width=60)
 
 with col2:
     st.markdown("""
-        <div style="padding: 20px; background: linear-gradient(135deg, rgba(147, 197, 114, 0.15) 0%, rgba(45, 80, 22, 0.1) 100%); border-radius: 15px;">
-            <h1 style="font-size: 2.5em; margin: 0; color: #2D5016;">📚 AI Research Collaborator</h1>
-            <p style="font-size: 1em; color: #4A7C2C; margin: 5px 0 0 0; font-style: italic;">
+        <div style="padding: 15px 20px; background: linear-gradient(135deg, rgba(147, 197, 114, 0.15) 0%, rgba(45, 80, 22, 0.1) 100%); border-radius: 15px;">
+            <h1 style="font-size: 2.2em; margin: 0; color: #2D5016;">📚 AI Research Collaborator</h1>
+            <p style="font-size: 0.95em; color: #4A7C2C; margin: 5px 0 0 0; font-style: italic;">
                 Discover papers • Find researchers • Explore directions
             </p>
         </div>
