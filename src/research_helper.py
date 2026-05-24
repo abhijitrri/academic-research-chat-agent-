@@ -18,29 +18,37 @@ def fetch_papers(research_topic: str, num_papers: int, years: int) -> pd.DataFra
     """
     agent = ResearchAgent()
 
-    prompt = f"""Find the {num_papers} most important and influential papers in the field of "{research_topic}"
-published or appeared on arxiv in the last {years} years.
+    prompt = f"""Based on your knowledge, recommend the {num_papers} most important, influential, and impactful papers/review articles/books
+in the field of "{research_topic}" published in the last {years} years.
+
+These should be papers you actually know about from your training data. Include papers from:
+- Top-tier journals (Nature, Science, PNAS, Cell, Lancet, etc.)
+- High-quality conference proceedings (NeurIPS, ICML, ICCV, ECCV, MICCAI, etc.)
+- ArXiv preprints that gained significant attention
+- Important review articles and books in the field
 
 For each paper, provide EXACTLY in this JSON format:
 {{
     "papers": [
         {{
-            "title": "Paper Title",
+            "title": "Exact paper title you know about",
             "authors": ["Author One", "Author Two", "Author Three"],
             "year": 2024,
-            "publication_link": "https://doi.org/...",
-            "arxiv_link": "https://arxiv.org/abs/..."
+            "publication_link": "https://doi.org/10.xxxx/xxxxx or https://actual-journal-url.com/paper",
+            "arxiv_link": "https://arxiv.org/abs/XXXX.XXXXX or null if not applicable"
         }}
     ]
 }}
 
-Rules:
+CRITICAL RULES:
+- Only include papers/articles/books you have reliable knowledge about
 - Sort authors alphabetically by last name
-- Include DOI/publication links if available
-- Include ArXiv links if available
-- If a link is not available, use null
-- Return ONLY valid JSON, no other text
-- Papers should be seminal works, highly cited, or recent breakthroughs in the field"""
+- Use realistic DOI links or journal URLs if you know them, otherwise use null
+- Use real arxiv links if the paper is on arxiv, otherwise null
+- Year must be between {2024 - years} and 2024
+- Return ONLY valid JSON with no other text
+- Papers should be seminal works, highly cited papers, or important recent breakthroughs
+- Include diverse perspectives and methodologies in the field"""
 
     response = agent.chat(prompt)
 
@@ -80,26 +88,34 @@ def fetch_researchers(research_topic: str) -> pd.DataFrame:
     """
     agent = ResearchAgent()
 
-    prompt = f"""Find the 10 most authoritative and influential contemporary researchers in the field of "{research_topic}"
-who have published at least one paper or article in this field in the last 2 years.
+    prompt = f"""Based on your knowledge, list the 10 most authoritative, influential, and active contemporary researchers
+in the field of "{research_topic}" who have published papers or articles in this field in the last 2 years.
+
+Focus on researchers who are:
+- Leaders in their subfields
+- Have high citation counts
+- Published in top-tier venues recently
+- Known for significant contributions to the field
 
 For each researcher, provide EXACTLY in this JSON format:
 {{
     "researchers": [
         {{
-            "name": "Full Name",
-            "affiliation": "University/Institution Name",
-            "homepage": "https://..."
+            "name": "Full Name (First Last)",
+            "affiliation": "Current University/Institution Name",
+            "homepage": "https://researcher-website.edu or null"
         }}
     ]
 }}
 
-Rules:
-- Include only researchers with recent publications (last 2 years)
-- Include their current institution/affiliation
-- Include homepage link if available, otherwise use null
-- Sort by influence/citation count
-- Return ONLY valid JSON, no other text"""
+CRITICAL RULES:
+- Only include researchers you have reliable knowledge about
+- Use their current/recent affiliations
+- Include full names in (First Last) format
+- Include university homepage links if you know them, otherwise use null
+- Sort by research influence and recent activity
+- Return ONLY valid JSON with no other text
+- Include researchers from different countries and institutions"""
 
     response = agent.chat(prompt)
 
@@ -172,19 +188,30 @@ def get_research_directions(research_topic: str) -> list:
     """
     agent = ResearchAgent()
 
-    prompt = f"""Based on current trends in "{research_topic}", suggest 5 promising future research directions.
+    prompt = f"""Based on current trends, open challenges, and emerging opportunities in "{research_topic}",
+propose 5 promising and innovative future research directions that are:
+- Feasible and actionable
+- Address gaps in current knowledge
+- Have significant potential impact
+- Build on recent advances in the field
 
 For each direction, provide in this JSON format:
 {{
     "directions": [
         {{
-            "title": "Direction Title",
-            "description": "Description up to 200 words..."
+            "title": "Concise research direction title",
+            "description": "A detailed description (max 200 words) explaining: (1) what the direction is about,
+            (2) why it's important, (3) potential approaches or methodologies, (4) expected impact or applications"
         }}
     ]
 }}
 
-Return ONLY valid JSON."""
+CRITICAL RULES:
+- Each title should be specific and actionable
+- Descriptions should be based on real gaps and opportunities in the field
+- Avoid vague or overly general suggestions
+- Include diverse perspectives (theoretical, applied, methodological, etc.)
+- Return ONLY valid JSON with no other text"""
 
     response = agent.chat(prompt)
 
