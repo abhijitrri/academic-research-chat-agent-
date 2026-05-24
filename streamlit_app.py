@@ -12,27 +12,170 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for background
+# Custom CSS for beautiful styling
 st.markdown("""
     <style>
-        .main {
+        /* Pistachio green background with transparent SNB.jpg overlay */
+        .stApp {
+            background-color: #93C572;
             background-image: url('file:///Users/abhijitghosh/projects/academic-research-chat-agent-/SNB.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            opacity: 0.95;
+            background-blend-mode: overlay;
+            background-color: rgba(147, 197, 114, 0.85);
+        }
+
+        /* Main content area */
+        .main {
+            background-color: rgba(255, 255, 255, 0.92);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(147, 197, 114, 0.2);
+        }
+
+        /* Sidebar styling */
+        .sidebar .sidebar-content {
+            background-color: rgba(147, 197, 114, 0.95);
+            border-radius: 10px;
+        }
+
+        /* Header styling */
+        h1 {
+            color: #2D5016;
+            font-weight: 700;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(147, 197, 114, 0.2);
+            margin-bottom: 10px;
+        }
+
+        h2, h3 {
+            color: #4A7C2C;
+            font-weight: 600;
+            border-left: 5px solid #93C572;
+            padding-left: 15px;
+            margin-top: 20px;
+        }
+
+        /* Sidebar text */
+        .sidebar .sidebar-content {
+            color: #ffffff;
+        }
+
+        .sidebar h2, .sidebar h3 {
+            color: #ffffff;
+            border-left-color: #ffffff;
+        }
+
+        /* Input fields styling */
+        .stTextInput input {
+            border-radius: 8px;
+            border: 2px solid #93C572;
+            padding: 10px;
+            color: #2D5016;
+        }
+
+        .stSlider {
+            color: #4A7C2C;
+        }
+
+        /* Button styling */
+        .stButton > button {
+            background-color: #93C572;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(147, 197, 114, 0.3);
+        }
+
+        .stButton > button:hover {
+            background-color: #7AB54A;
+            box-shadow: 0 6px 20px rgba(147, 197, 114, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Dataframe styling */
+        .stDataFrame {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(147, 197, 114, 0.15);
+        }
+
+        /* Success, info, warning messages */
+        .stSuccess {
+            background-color: rgba(147, 197, 114, 0.2);
+            border-left: 5px solid #93C572;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .stInfo {
+            background-color: rgba(74, 124, 44, 0.1);
+            border-left: 5px solid #4A7C2C;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .stWarning {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-left: 5px solid #FFC107;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        /* Spinner text */
+        .stSpinner {
+            color: #93C572;
+        }
+
+        /* Divider styling */
+        hr {
+            border-color: #93C572;
+            border-style: solid;
+            opacity: 0.3;
+        }
+
+        /* Footer styling */
+        .footer {
+            text-align: center;
+            color: #4A7C2C;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #93C572;
+        }
+
+        /* Card-like containers */
+        .metric-card {
+            background: linear-gradient(135deg, rgba(147, 197, 114, 0.1) 0%, rgba(147, 197, 114, 0.05) 100%);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 5px solid #93C572;
+            margin: 10px 0;
         }
     </style>
     """, unsafe_allow_html=True)
 
-# Title and description
-st.title("📚 AI Research Collaborator Agent")
-st.markdown("---")
-st.write("Discover research papers, researchers, and insights in your field of interest.")
+# Title and description with beautiful styling
+st.markdown("""
+    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(147, 197, 114, 0.15) 0%, rgba(45, 80, 22, 0.1) 100%); border-radius: 15px; margin-bottom: 30px;">
+        <h1 style="font-size: 3em; margin: 0; color: #2D5016;">📚 AI Research Collaborator Agent</h1>
+        <p style="font-size: 1.2em; color: #4A7C2C; margin: 10px 0 0 0; font-style: italic;">
+            Discover groundbreaking research papers, identify leading researchers, and explore future directions
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Sidebar for input parameters
 with st.sidebar:
-    st.header("🔍 Research Parameters")
+    st.markdown("""
+        <div style="background: linear-gradient(135deg, #93C572 0%, #7AB54A 100%); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+            <h2 style="color: white; text-align: center; margin: 0;">🔍 Research Parameters</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Research topic input
     research_topic = st.text_input(
@@ -125,24 +268,57 @@ if search_button:
         st.markdown("*(Chat interface coming soon)*")
 else:
     st.markdown("""
-        ### Welcome to the AI Research Collaborator Agent
+        <div style="background: linear-gradient(135deg, rgba(147, 197, 114, 0.1) 0%, rgba(74, 124, 44, 0.05) 100%); border-radius: 15px; padding: 30px; border-left: 5px solid #93C572;">
+            <h2 style="color: #2D5016; margin-top: 0;">👋 Welcome to the AI Research Collaborator Agent</h2>
 
-        This platform helps you discover research papers, identify key researchers,
-        and explore new research directions in your field of interest.
+            <p style="color: #4A7C2C; font-size: 1.1em;">
+                This platform helps you discover research papers, identify key researchers,
+                and explore new research directions in your field of interest.
+            </p>
 
-        **How to use:**
-        1. Enter your research topic in the sidebar
-        2. Select how many papers you want to explore (1-10)
-        3. Choose the time period (last 1-50 years)
-        4. Click **Search** to begin your research journey
+            <div style="background: white; border-radius: 10px; padding: 20px; margin: 20px 0;">
+                <h3 style="color: #2D5016; border: none; padding: 0; margin-top: 0;">🚀 How to use:</h3>
+                <ol style="color: #4A7C2C; line-height: 1.8;">
+                    <li>Enter your research topic in the sidebar</li>
+                    <li>Select how many papers you want to explore (1-10)</li>
+                    <li>Choose the time period (last 1-50 years)</li>
+                    <li>Click <strong>Search</strong> to begin your research journey</li>
+                </ol>
+            </div>
 
-        **Features:**
-        - 📰 Discover top papers with direct links
-        - 👨‍🔬 Identify leading researchers in your field
-        - 💬 Chat with AI for paper summaries
-        - 🚀 Get suggestions for new research directions
-    """)
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div style="background: white; border-radius: 10px; padding: 15px; text-align: center;">
+                    <p style="font-size: 1.5em; margin: 0;">📰</p>
+                    <p style="color: #2D5016; font-weight: bold; margin: 5px 0;">Real Papers</p>
+                    <p style="color: #4A7C2C; font-size: 0.9em; margin: 0;">Direct ArXiv links</p>
+                </div>
+                <div style="background: white; border-radius: 10px; padding: 15px; text-align: center;">
+                    <p style="font-size: 1.5em; margin: 0;">👨‍🔬</p>
+                    <p style="color: #2D5016; font-weight: bold; margin: 5px 0;">Top Researchers</p>
+                    <p style="color: #4A7C2C; font-size: 0.9em; margin: 0;">Leading experts</p>
+                </div>
+                <div style="background: white; border-radius: 10px; padding: 15px; text-align: center;">
+                    <p style="font-size: 1.5em; margin: 0;">🔮</p>
+                    <p style="color: #2D5016; font-weight: bold; margin: 5px 0;">Future Directions</p>
+                    <p style="color: #4A7C2C; font-size: 0.9em; margin: 0;">New research paths</p>
+                </div>
+                <div style="background: white; border-radius: 10px; padding: 15px; text-align: center;">
+                    <p style="font-size: 1.5em; margin: 0;">💬</p>
+                    <p style="color: #2D5016; font-weight: bold; margin: 5px 0;">AI Chat</p>
+                    <p style="color: #4A7C2C; font-size: 0.9em; margin: 0;">Summarize papers</p>
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
 # Footer
-st.markdown("---")
-st.markdown(f"⚙️ LLM Provider: **{settings.llm_provider.upper()}** | Model: **{settings.get_active_model()}**")
+st.markdown("""
+    <div style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #93C572; text-align: center;">
+        <p style="color: #4A7C2C; font-size: 0.9em;">
+            ⚙️ LLM Provider: <strong>{}</strong> | Model: <strong>{}</strong>
+        </p>
+        <p style="color: #7AB54A; font-size: 0.85em; margin-top: 10px;">
+            🌿 Powered by AI Research Collaborator Agent
+        </p>
+    </div>
+    """.format(settings.llm_provider.upper(), settings.get_active_model()), unsafe_allow_html=True)
