@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 from src.config.settings import settings
+from src.research_helper import fetch_papers, fetch_researchers, get_research_directions
 
 # Page configuration
 st.set_page_config(
@@ -73,18 +74,53 @@ if search_button:
         st.success(f"Searching for papers in: **{research_topic}**")
         st.info(f"Parameters: {num_papers} papers from last {years_to_explore} years")
 
-        # Placeholder for results
+        # Fetch and display papers
         st.markdown("### 📖 Top Research Papers")
-        st.markdown("*(Results will appear here)*")
+        with st.spinner("Fetching papers..."):
+            papers_df = fetch_papers(research_topic, num_papers, years_to_explore)
 
+        if not papers_df.empty:
+            st.dataframe(
+                papers_df,
+                use_container_width=True,
+                column_config={
+                    "Publication Link": st.column_config.LinkColumn(),
+                    "ArXiv Link": st.column_config.LinkColumn(),
+                }
+            )
+        else:
+            st.warning("No papers found. Please try a different search query.")
+
+        # Fetch and display researchers
         st.markdown("### 👥 Top Researchers")
-        st.markdown("*(Results will appear here)*")
+        with st.spinner("Fetching researchers..."):
+            researchers_df = fetch_researchers(research_topic)
+
+        if not researchers_df.empty:
+            st.dataframe(
+                researchers_df,
+                use_container_width=True,
+                column_config={
+                    "Homepage": st.column_config.LinkColumn(),
+                }
+            )
+        else:
+            st.warning("No researchers found.")
+
+        # Fetch research directions
+        st.markdown("### 🔮 Future Research Directions")
+        with st.spinner("Generating research directions..."):
+            directions = get_research_directions(research_topic)
+
+        if directions:
+            for i, direction in enumerate(directions, 1):
+                st.markdown(f"**{i}. {direction.get('title', 'Untitled')}**")
+                st.write(direction.get('description', 'No description available.'))
+        else:
+            st.info("No research directions generated.")
 
         st.markdown("### 💬 Chat with AI")
-        st.markdown("*(Chat interface will appear here)*")
-
-        st.markdown("### 🔮 Future Research Directions")
-        st.markdown("*(Research directions will appear here)*")
+        st.markdown("*(Chat interface coming soon)*")
 else:
     st.markdown("""
         ### Welcome to the AI Research Collaborator Agent
